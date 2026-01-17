@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -53,9 +54,6 @@ struct Node
 // parses content as generic markdown content, splitting it into a list of Nodes
 vector<Node> parse_phrasing_content(const string &content) {
 
-    // BUG: this should find the earliest matching pair in the string,
-    // the way priority is currently implemented doesn't work
-
     const string EMPHASIS_ASTERISK = "*";
     const string STRONG_ASTERISK = "**";
     const string EMPHASIS_UNDERSCORE = "_";
@@ -71,33 +69,32 @@ vector<Node> parse_phrasing_content(const string &content) {
     // while we haven't processed the whole string...
     vector<Node> nodes;
     size_t pos = 0;
+    string text_buffer = "";
     while (pos < content.length()) {
 
-        // loop through all possible tokens and try to find matching pairs
         bool found_match = false;
         for (string token : TOKENS) {
 
-            size_t first = content.find(token, pos);
-            if (first == string::npos)
+            // is this the start of a valid token?
+            if (content.substr(pos, token.length()) != token) {
                 continue;
-            size_t second = content.find(token, first + token.length());
-            if (second == string::npos)
-                continue;
+            }
 
-            // both tokens are right text to each other, no text being marked
-            if (second - first == token.length())
+            // is there a closing token of this type?
+            size_t matching_pos = content.find(token, pos + token.length());
+            if (matching_pos == string::npos) {
                 continue;
+            }
 
-            // we found two valid positions
-            // everything up until the first delimiter is text
-            string text_prefix = content.substr(pos, first - pos);
-            if (text_prefix.length() > 0) {
-                nodes.push_back(Text{text_prefix});
+            // push text_buffer node if it is not empty
+            if (text_buffer.length() > 0) {
+                nodes.push_back(Text{text_buffer});
+                text_buffer = "";
             }
 
             // everything between the delimiters is marked
-            string marked = content.substr(first + token.length(),
-                                           second - first - token.length());
+            string marked = content.substr(pos + token.length(),
+                                           matching_pos - pos - token.length());
             if (token == INLINE_CODE) {
                 nodes.push_back(InlineCode{marked});
             } else if (token == EMPHASIS_ASTERISK ||
@@ -112,17 +109,20 @@ vector<Node> parse_phrasing_content(const string &content) {
                     "parse phrasing content tried to check an invalid token!");
             }
 
-            pos = second + token.length();
+            pos = matching_pos + token.length();
             found_match = true;
             break;
         }
 
-        // if no tokens were found, the rest of the string is all text
         if (!found_match) {
-            Node remaining_text = Node{Text{content.substr(pos)}};
-            nodes.push_back(remaining_text);
-            break;
+            text_buffer += content[pos];
+            pos++;
         }
+    }
+
+    // push text_buffer node if it is not empty
+    if (text_buffer.length() > 0) {
+        nodes.push_back(Text{text_buffer});
     }
 
     return nodes;
