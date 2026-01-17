@@ -1,8 +1,8 @@
 // This tells Catch to provide a main() - only do this in one cpp file
 #define CATCH_CONFIG_MAIN
+#include "parser.cpp"
 #include <catch2/catch.hpp>
 #include <vector>
-#include "parser.cpp"
 
 using namespace std;
 
@@ -22,6 +22,19 @@ TEST_CASE("read_lines works correctly", "[read_lines]") {
     }
 
     REQUIRE(expected == read_lines("./tests/hello_world.md"));
+}
+
+TEST_CASE("concatenate_lines works correctly", "[concatenate_lines]") {
+    string expected = "# hello world! "
+                      " "
+                      "this is a markdown file. it has some lines of text. "
+                      "hooray! this is one long "
+                      "paragraph split over multiples lines. "
+                      " "
+                      "this is a short line. with *italics* and **bold**.";
+
+    vector<string> lines = read_lines("./tests/hello_world.md");
+    REQUIRE(expected == concatenate_lines(lines));
 }
 
 TEST_CASE("parse_text works on simple input", "[parse_text]") {
@@ -45,10 +58,59 @@ TEST_CASE("parse_heading errors on invalid depths", "[parse_heading]") {
     REQUIRE_THROWS(parse_heading("####### this header has too much depth!"));
 }
 
-TEST_CASE("Factorials are computed", "[factorial]") {
-    REQUIRE(factorial(0) == 1);
-    REQUIRE(factorial(1) == 1);
-    REQUIRE(factorial(2) == 2);
-    REQUIRE(factorial(3) == 6);
-    REQUIRE(factorial(10) == 3628800);
+TEST_CASE("parse_phrasing_content works on simple inputs",
+          "[parse_phrasing_content]") {
+
+    SECTION("parses a single block of text") {
+        string content = "hello world!";
+        vector<Node> expected_nodes = {Text{"hello world!"}};
+        REQUIRE(expected_nodes == parse_phrasing_content(content));
+    }
+
+    SECTION("parses a single block of inline code") {
+        string content = "`hello world!`";
+        vector<Node> expected_nodes = {InlineCode{"hello world!"}};
+        REQUIRE(expected_nodes == parse_phrasing_content(content));
+    }
+
+    SECTION("parses a single block of emphasis asterisks") {
+        string content = "*hello world!*";
+        vector<Node> expected_nodes = {
+            Emphasis{vector<Node>({Text{"hello world!"}})}};
+        REQUIRE(expected_nodes == parse_phrasing_content(content));
+    }
+
+    SECTION("parses a single block of emphasis underscores") {
+        string content = "_hello world!_";
+        vector<Node> expected_nodes = {
+            Emphasis{vector<Node>({Text{"hello world!"}})}};
+        REQUIRE(expected_nodes == parse_phrasing_content(content));
+    }
+
+    SECTION("parses a single block of strong asterisks") {
+        string content = "**hello world!**";
+        vector<Node> expected_nodes = {
+            Strong{vector<Node>({Text{"hello world!"}})}};
+        REQUIRE(expected_nodes == parse_phrasing_content(content));
+    }
+
+    SECTION("parses a single block of strong underscores") {
+        string content = "__hello world!__";
+        vector<Node> expected_nodes = {
+            Strong{vector<Node>({Text{"hello world!"}})}};
+        REQUIRE(expected_nodes == parse_phrasing_content(content));
+    }
+}
+
+TEST_CASE("parse_phrasing_content parses multiple blocks in a row",
+          "[parse_phrasing_content]") {
+    string content =
+        "text text text *emphasis* __strong__`inline` trailing text";
+    vector<Node> expected_nodes = {Text{"text text text "},
+                                   Emphasis{vector<Node>{Text{"emphasis"}}},
+                                   Text{" "},
+                                   Strong{vector<Node>{Text{"strong"}}},
+                                   InlineCode{"inline"},
+                                   Text{" trailing text"}};
+    REQUIRE(expected_nodes == parse_phrasing_content(content));
 }
