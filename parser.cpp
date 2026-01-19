@@ -55,10 +55,10 @@ vector<Node> parse_phrasing_content(const string &content) {
                 nodes.push_back(InlineCode{marked});
             } else if (token == EMPHASIS_ASTERISK ||
                        token == EMPHASIS_UNDERSCORE) {
-                vector<Node> emphasis_nodes = {Node{Text{marked}}};
+                vector<Node> emphasis_nodes = parse_phrasing_content(marked);
                 nodes.push_back(Emphasis{emphasis_nodes});
             } else if (token == STRONG_ASTERISK || token == STRONG_UNDERSCORE) {
-                vector<Node> strong_nodes = {Node{Text{marked}}};
+                vector<Node> strong_nodes = parse_phrasing_content(marked);
                 nodes.push_back(Strong{strong_nodes});
             } else {
                 throw runtime_error(
