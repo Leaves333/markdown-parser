@@ -1,5 +1,6 @@
 // This tells Catch to provide a main() - only do this in one cpp file
 #define CATCH_CONFIG_MAIN
+#include "types.h"
 #include "parser.cpp"
 #include <catch2/catch.hpp>
 #include <vector>
@@ -112,5 +113,14 @@ TEST_CASE("parse_phrasing_content parses multiple blocks in a row",
                                    Strong{vector<Node>{Text{"strong"}}},
                                    InlineCode{"inline"},
                                    Text{" trailing text"}};
+    REQUIRE(expected_nodes == parse_phrasing_content(content));
+}
+
+TEST_CASE("parse_phrasing_content handles nested blocks",
+          "[parse_phrasing_content]") {
+    string content = "**strong *emphasis* strong**";
+    vector<Node> expected_nodes = {Strong{
+        vector<Node>{Text{"strong "}, Emphasis{vector<Node>{Text{"emphasis"}}},
+                     Text{" strong"}}}};
     REQUIRE(expected_nodes == parse_phrasing_content(content));
 }

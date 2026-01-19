@@ -2,54 +2,10 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
-#include <variant>
 #include <vector>
+#include "types.h"
 
 using namespace std;
-
-// forward declare Node type
-struct Node;
-
-struct Root {
-    vector<Node> children;
-    bool operator==(const Root &) const = default;
-};
-
-struct Paragraph {
-    vector<Node> children;
-    bool operator==(const Paragraph &) const = default;
-};
-
-struct Text {
-    string value;
-    bool operator==(const Text &) const = default;
-};
-
-struct InlineCode {
-    string value;
-    bool operator==(const InlineCode &) const = default;
-};
-
-struct Emphasis {
-    vector<Node> children;
-    bool operator==(const Emphasis &) const = default;
-};
-
-struct Strong {
-    vector<Node> children;
-    bool operator==(const Strong &) const = default;
-};
-
-struct Heading {
-    int depth;
-    vector<Node> children;
-    bool operator==(const Heading &) const = default;
-};
-
-struct Node
-    : variant<Root, Paragraph, Heading, Text, InlineCode, Emphasis, Strong> {
-    using variant::variant;
-};
 
 // parses content as generic markdown content, splitting it into a list of Nodes
 vector<Node> parse_phrasing_content(const string &content) {
