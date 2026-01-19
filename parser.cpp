@@ -1,35 +1,34 @@
+#include "parser.h"
+#include "types.h"
 #include <cstddef>
 #include <fstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include "types.h"
-
-using namespace std;
 
 // parses content as generic markdown content, splitting it into a list of Nodes
-vector<Node> parse_phrasing_content(const string &content) {
+std::vector<Node> parse_phrasing_content(const std::string &content) {
 
-    const string EMPHASIS_ASTERISK = "*";
-    const string STRONG_ASTERISK = "**";
-    const string EMPHASIS_UNDERSCORE = "_";
-    const string STRONG_UNDERSCORE = "__";
-    const string INLINE_CODE = "`";
+    const std::string EMPHASIS_ASTERISK = "*";
+    const std::string STRONG_ASTERISK = "**";
+    const std::string EMPHASIS_UNDERSCORE = "_";
+    const std::string STRONG_UNDERSCORE = "__";
+    const std::string INLINE_CODE = "`";
 
     // list of tokens we should check when parsing the markdown content.
     // order here determines precedence when generating the AST
-    const vector<string> TOKENS = {INLINE_CODE, STRONG_ASTERISK,
-                                   STRONG_UNDERSCORE, EMPHASIS_ASTERISK,
-                                   EMPHASIS_UNDERSCORE};
+    const std::vector<std::string> TOKENS = {
+        INLINE_CODE, STRONG_ASTERISK, STRONG_UNDERSCORE, EMPHASIS_ASTERISK,
+        EMPHASIS_UNDERSCORE};
 
-    // while we haven't processed the whole string...
-    vector<Node> nodes;
+    // while we haven't processed the whole std::string...
+    std::vector<Node> nodes;
     size_t pos = 0;
-    string text_buffer = "";
+    std::string text_buffer = "";
     while (pos < content.length()) {
 
         bool found_match = false;
-        for (string token : TOKENS) {
+        for (std::string token : TOKENS) {
 
             // is this the start of a valid token?
             if (content.substr(pos, token.length()) != token) {
@@ -38,7 +37,7 @@ vector<Node> parse_phrasing_content(const string &content) {
 
             // is there a closing token of this type?
             size_t matching_pos = content.find(token, pos + token.length());
-            if (matching_pos == string::npos) {
+            if (matching_pos == std::string::npos) {
                 continue;
             }
 
@@ -49,19 +48,20 @@ vector<Node> parse_phrasing_content(const string &content) {
             }
 
             // everything between the delimiters is marked
-            string marked = content.substr(pos + token.length(),
-                                           matching_pos - pos - token.length());
+            std::string marked = content.substr(
+                pos + token.length(), matching_pos - pos - token.length());
             if (token == INLINE_CODE) {
                 nodes.push_back(InlineCode{marked});
             } else if (token == EMPHASIS_ASTERISK ||
                        token == EMPHASIS_UNDERSCORE) {
-                vector<Node> emphasis_nodes = parse_phrasing_content(marked);
+                std::vector<Node> emphasis_nodes =
+                    parse_phrasing_content(marked);
                 nodes.push_back(Emphasis{emphasis_nodes});
             } else if (token == STRONG_ASTERISK || token == STRONG_UNDERSCORE) {
-                vector<Node> strong_nodes = parse_phrasing_content(marked);
+                std::vector<Node> strong_nodes = parse_phrasing_content(marked);
                 nodes.push_back(Strong{strong_nodes});
             } else {
-                throw runtime_error(
+                throw std::runtime_error(
                     "parse phrasing content tried to check an invalid token!");
             }
 
@@ -84,10 +84,10 @@ vector<Node> parse_phrasing_content(const string &content) {
     return nodes;
 }
 
-Text parse_text(const string &line) { return Text{line}; }
+Text parse_text(const std::string &line) { return Text{line}; }
 
 // parses `line` as if it was a heading, and returns the generated Node
-Heading parse_heading(const string &line) {
+Heading parse_heading(const std::string &line) {
     int depth = 0;
     while (depth < line.length() && line[depth] == '#') {
         depth++;
@@ -109,12 +109,12 @@ Heading parse_heading(const string &line) {
 
 // opens `filename`, reads it line by line,
 // and returns a vector of the lines read
-vector<string> read_lines(string filename) {
-    ifstream file;
+std::vector<std::string> read_lines(std::string filename) {
+    std::ifstream file;
     file.open(filename);
 
-    vector<string> lines;
-    string line;
+    std::vector<std::string> lines;
+    std::string line;
     while (getline(file, line)) {
         lines.push_back(line);
     }
@@ -124,8 +124,8 @@ vector<string> read_lines(string filename) {
 
 // joins each line of `lines` together with a space.
 // should work similarly to `" ".join(lines)` in python
-string concatenate_lines(const vector<string> &lines) {
-    string joined = "";
+std::string concatenate_lines(const std::vector<std::string> &lines) {
+    std::string joined = "";
     for (int i = 0; i < lines.size(); i++) {
         joined += lines[i];
         if (i != lines.size() - 1) {
