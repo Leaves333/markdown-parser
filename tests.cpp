@@ -152,4 +152,19 @@ TEST_CASE("parse_ast works on simple inputs", "[parse_ast]") {
         Paragraph{vector<Node>{Text{"paragraph paragraph blah blah blah this "
                                     "should all be one single block"}}}}};
     REQUIRE(expected == parse_ast(document));
+
+    document = read_lines("./tests/hello_world.md");
+    expected = Root{vector<Node>{
+        Heading{1, vector<Node>{Text{"hello world!"}}},
+        Paragraph{vector<Node>{
+            Text{"this is a markdown file. it has some lines of text. hooray! "
+                 "this is one long paragraph split over multiples lines."}}},
+        Paragraph{vector<Node>{
+            Text{"this is a short line. with "},
+            Emphasis{vector<Node>{Text{"italics"}}},
+            Text{" and "},
+            Strong{vector<Node>{Text{"bold"}}},
+            Text{"."},
+        }}}};
+    REQUIRE(expected == parse_ast(document));
 }

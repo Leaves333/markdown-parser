@@ -8,7 +8,7 @@ struct Printer {
     std::ostream &os;
     void operator()(Root n) { os << "Root{" << n.children << "}"; }
     void operator()(Paragraph n) { os << "Paragraph{" << n.children << "}"; }
-    void operator()(Heading n) { os << "Heading{" << n.children << "}"; }
+    void operator()(Heading n) { os << "Heading{depth=" << n.depth << ", " << n.children << "}"; }
     void operator()(Emphasis n) { os << "Emphasis{" << n.children << "}"; }
     void operator()(Strong n) { os << "Strong{" << n.children << "}"; }
     void operator()(Text n) { os << "Text{\"" << n.value << "\"}"; }
