@@ -6,7 +6,44 @@
 #include <string>
 #include <vector>
 
-// parses content as generic markdown content, splitting it into a list of Nodes
+const std::string EMPTY = "";
+
+// converts `block` into a Paragraph via parse_phrasing_content,
+// pushes the converted Paragraph into `root`,
+// and sets `block` to "". does nothing if `block` is empty.
+void push_block(Root &root, std::string &block) {
+    if (block == EMPTY) {
+        return;
+    }
+    Paragraph p;
+    p.children = parse_phrasing_content(block);
+    root.children.push_back(p);
+    block = EMPTY;
+}
+
+Root parse_ast(const std::vector<std::string> &lines) {
+
+    Root root;
+    std::string block = EMPTY;
+    for (const std::string &line : lines) {
+        if (line == EMPTY) {
+            push_block(root, block);
+        } else if (line[0] == '#') {
+            push_block(root, block);
+            root.children.push_back(parse_heading(line));
+        } else {
+            if (block == EMPTY) {
+                block = line;
+            } else {
+                block += " " + line;
+            }
+        }
+    }
+
+    push_block(root, block);
+    return root;
+}
+
 std::vector<Node> parse_phrasing_content(const std::string &content) {
 
     const std::string EMPHASIS_ASTERISK = "*";
@@ -86,7 +123,6 @@ std::vector<Node> parse_phrasing_content(const std::string &content) {
 
 Text parse_text(const std::string &line) { return Text{line}; }
 
-// parses `line` as if it was a heading, and returns the generated Node
 Heading parse_heading(const std::string &line) {
     int depth = 0;
     while (depth < line.length() && line[depth] == '#') {
@@ -100,15 +136,11 @@ Heading parse_heading(const std::string &line) {
 
     Heading heading;
     heading.depth = depth;
-
-    Text contents = parse_text(line.substr(depth));
-    heading.children.push_back(Node{contents});
+    heading.children = parse_phrasing_content(line.substr(depth + 1));
 
     return heading;
 }
 
-// opens `filename`, reads it line by line,
-// and returns a vector of the lines read
 std::vector<std::string> read_lines(std::string filename) {
     std::ifstream file;
     file.open(filename);
@@ -122,8 +154,6 @@ std::vector<std::string> read_lines(std::string filename) {
     return lines;
 }
 
-// joins each line of `lines` together with a space.
-// should work similarly to `" ".join(lines)` in python
 std::string concatenate_lines(const std::vector<std::string> &lines) {
     std::string joined = "";
     for (int i = 0; i < lines.size(); i++) {

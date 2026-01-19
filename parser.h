@@ -2,6 +2,9 @@
 #include <string>
 #include <vector>
 
+// given a sequence of lines of markdown, generates the AST for it
+Root parse_ast(const std::vector<std::string> &lines);
+
 // parses content as generic markdown content, splitting it into a list of Nodes
 std::vector<Node> parse_phrasing_content(const std::string &content);
 

@@ -1,7 +1,7 @@
 // This tells Catch to provide a main() - only do this in one cpp file
 #define CATCH_CONFIG_MAIN
-#include "types.h"
 #include "parser.h"
+#include "types.h"
 #include <catch2/catch.hpp>
 #include <vector>
 
@@ -44,12 +44,12 @@ TEST_CASE("parse_text works on simple input", "[parse_text]") {
 
 TEST_CASE("parse_heading works on simple input", "[parse_heading]") {
     Heading h = parse_heading("# This is a big heading");
-    vector<Node> expected_children = {Text{" This is a big heading"}};
+    vector<Node> expected_children = {Text{"This is a big heading"}};
     REQUIRE(h.depth == 1);
     REQUIRE(h.children == expected_children);
 
     h = parse_heading("##### This is a small heading");
-    expected_children = {Text{" This is a small heading"}};
+    expected_children = {Text{"This is a small heading"}};
     REQUIRE(h.depth == 5);
     REQUIRE(h.children == expected_children);
 }
@@ -57,6 +57,21 @@ TEST_CASE("parse_heading works on simple input", "[parse_heading]") {
 TEST_CASE("parse_heading errors on invalid depths", "[parse_heading]") {
     REQUIRE_THROWS(parse_heading("this is actually not a header."));
     REQUIRE_THROWS(parse_heading("####### this header has too much depth!"));
+}
+
+TEST_CASE("parse_heading recognizes phrasing content in title",
+          "[parse_heading]") {
+
+    Heading h = parse_heading("# title *with emphasis* **and strong**");
+    vector<Node> expected_children = {
+        Text{"title "},
+        Emphasis{vector<Node>{Text{"with emphasis"}}},
+        Text{" "},
+        Strong{vector<Node>{Text{"and strong"}}},
+    };
+
+    REQUIRE(h.depth == 1);
+    REQUIRE(h.children == expected_children);
 }
 
 TEST_CASE("parse_phrasing_content works on simple inputs",
@@ -123,4 +138,18 @@ TEST_CASE("parse_phrasing_content handles nested blocks",
         vector<Node>{Text{"strong "}, Emphasis{vector<Node>{Text{"emphasis"}}},
                      Text{" strong"}}}};
     REQUIRE(expected_nodes == parse_phrasing_content(content));
+}
+
+TEST_CASE("parse_ast works on simple inputs", "[parse_ast]") {
+    vector<string> document = {
+        "# heading",
+        "",
+        "paragraph paragraph blah blah blah",
+        "this should all be one single block",
+    };
+    Root expected = Root{vector<Node>{
+        Heading{1, vector<Node>{Text{"heading"}}},
+        Paragraph{vector<Node>{Text{"paragraph paragraph blah blah blah this "
+                                    "should all be one single block"}}}}};
+    REQUIRE(expected == parse_ast(document));
 }
