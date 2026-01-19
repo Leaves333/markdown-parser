@@ -18,6 +18,10 @@ Heading parse_heading(const std::string &line);
 // and returns a vector of the lines read
 std::vector<std::string> read_lines(std::string filename);
 
-// joins each line of `lines` together with a space.
-// should work similarly to `" ".join(lines)` in python
-std::string concatenate_lines(const std::vector<std::string> &lines);
+// joins each line of `lines` together with delimiter.
+// should work like `delimiter.join(lines)` in python
+std::string join_lines(const std::vector<std::string> &lines,
+                       const std::string delimiter);
+
+// renders a node to html
+std::string render_html(const Node &n);

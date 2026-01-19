@@ -4,35 +4,36 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
-const std::string EMPTY = "";
+const std::string EMPTY_STRING = "";
 
 // converts `block` into a Paragraph via parse_phrasing_content,
 // pushes the converted Paragraph into `root`,
 // and sets `block` to "". does nothing if `block` is empty.
 void push_block(Root &root, std::string &block) {
-    if (block == EMPTY) {
+    if (block == EMPTY_STRING) {
         return;
     }
     Paragraph p;
     p.children = parse_phrasing_content(block);
     root.children.push_back(p);
-    block = EMPTY;
+    block = EMPTY_STRING;
 }
 
 Root parse_ast(const std::vector<std::string> &lines) {
 
     Root root;
-    std::string block = EMPTY;
+    std::string block = EMPTY_STRING;
     for (const std::string &line : lines) {
-        if (line == EMPTY) {
+        if (line == EMPTY_STRING) {
             push_block(root, block);
         } else if (line[0] == '#') {
             push_block(root, block);
             root.children.push_back(parse_heading(line));
         } else {
-            if (block == EMPTY) {
+            if (block == EMPTY_STRING) {
                 block = line;
             } else {
                 block += " " + line;
@@ -154,13 +155,83 @@ std::vector<std::string> read_lines(std::string filename) {
     return lines;
 }
 
-std::string concatenate_lines(const std::vector<std::string> &lines) {
+std::string join_lines(const std::vector<std::string> &lines, const std::string delimiter) {
     std::string joined = "";
     for (int i = 0; i < lines.size(); i++) {
         joined += lines[i];
         if (i != lines.size() - 1) {
-            joined += " ";
+            joined += delimiter;
         }
     }
     return joined;
+}
+
+namespace render {
+
+struct Renderer {
+
+    std::string operator()(const Root &n) {
+        std::vector<std::string> header_lines = read_lines("./data/header.html");
+        std::vector<std::string> footer_lines = read_lines("./data/footer.html");
+        std::string header = join_lines(header_lines, "\n");
+        std::string footer = join_lines(footer_lines, "\n");
+
+        std::string content = EMPTY_STRING;
+        for (const Node &child : n.children) {
+            content += render_html(child);
+        }
+
+        return header + content + footer;
+    }
+
+    std::string operator()(const Paragraph &n) {
+        std::string html = "<p>";
+        for (const Node &child : n.children) {
+            html += render_html(child);
+        }
+        html += "</p>";
+        return html;
+    }
+
+    std::string operator()(const Heading &n) {
+        std::string html = "<h" + std::to_string(n.depth) + ">";
+        for (const Node &child : n.children) {
+            html += render_html(child);
+        }
+        html += "<h" + std::to_string(n.depth) + ">";
+        return html;
+    }
+
+    std::string operator()(const Emphasis &n) {
+        std::string html = "<em>";
+        for (const Node &child : n.children) {
+            html += render_html(child);
+        }
+        html += "</em>";
+        return html;
+    }
+
+    std::string operator()(const Strong &n) {
+        std::string html = "<strong>";
+        for (const Node &child : n.children) {
+            html += render_html(child);
+        }
+        html += "</strong>";
+        return html;
+        return EMPTY_STRING;
+    }
+
+    std::string operator()(const Text &n) { return n.value; }
+
+    std::string operator()(const InlineCode &n) {
+        // TODO:
+        return EMPTY_STRING;
+    }
+
+};
+
+} // namespace render
+
+std::string render_html(const Node &n) {
+    return std::visit(render::Renderer{}, n);
 }

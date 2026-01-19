@@ -25,7 +25,7 @@ TEST_CASE("read_lines works correctly", "[read_lines]") {
     REQUIRE(expected == read_lines("./tests/hello_world.md"));
 }
 
-TEST_CASE("concatenate_lines works correctly", "[concatenate_lines]") {
+TEST_CASE("join_lines works correctly", "[join_lines]") {
     string expected = "# hello world! "
                       " "
                       "this is a markdown file. it has some lines of text. "
@@ -35,7 +35,7 @@ TEST_CASE("concatenate_lines works correctly", "[concatenate_lines]") {
                       "this is a short line. with *italics* and **bold**.";
 
     vector<string> lines = read_lines("./tests/hello_world.md");
-    REQUIRE(expected == concatenate_lines(lines));
+    REQUIRE(expected == join_lines(lines, " "));
 }
 
 TEST_CASE("parse_text works on simple input", "[parse_text]") {
