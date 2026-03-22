@@ -168,3 +168,37 @@ TEST_CASE("parse_ast works on simple inputs", "[parse_ast]") {
         }}}};
     REQUIRE(expected == parse_ast(document));
 }
+
+TEST_CASE("render_html renders text nodes", "[render_html]") {
+    Text text = Text{"hello world"};
+    std::string result = render_html(text);
+    REQUIRE(result == "hello world");
+
+    text = Text{"this is some other sample text...!!!"};
+    result = render_html(text);
+    REQUIRE(result == "this is some other sample text...!!!");
+}
+
+TEST_CASE("render_html renders heading nodes", "[render_html]") {
+    Heading heading =
+        Heading{.depth = 1, .children = vector<Node>{Text{"hello world"}}};
+    std::string result = render_html(heading);
+    REQUIRE(result == "<h1>hello world</h1>");
+
+    heading =
+        Heading{.depth = 3, .children = vector<Node>{Text{"i have depth 3"}}};
+    result = render_html(heading);
+    REQUIRE(result == "<h3>i have depth 3</h3>");
+}
+
+TEST_CASE("render_html renders emphasis nodes", "[render_html]") {
+    Emphasis emphasis = Emphasis{.children = vector<Node>{Text{"hello world"}}};
+    std::string result = render_html(emphasis);
+    REQUIRE(result == "<em>hello world</em>");
+}
+
+TEST_CASE("render_html renders strong nodes", "[render_html]") {
+    Strong strong = Strong{.children = vector<Node>{Text{"hello world"}}};
+    std::string result = render_html(strong);
+    REQUIRE(result == "<strong>hello world</strong>");
+}

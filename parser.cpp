@@ -198,7 +198,7 @@ struct Renderer {
         for (const Node &child : n.children) {
             html += render_html(child);
         }
-        html += "<h" + std::to_string(n.depth) + ">";
+        html += "</h" + std::to_string(n.depth) + ">";
         return html;
     }
 
@@ -218,14 +218,13 @@ struct Renderer {
         }
         html += "</strong>";
         return html;
-        return EMPTY_STRING;
     }
 
     std::string operator()(const Text &n) { return n.value; }
 
     std::string operator()(const InlineCode &n) {
         // TODO:
-        return EMPTY_STRING;
+        return "<code>" + n.value + "</code>";
     }
 
 };
