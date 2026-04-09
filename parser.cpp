@@ -223,7 +223,6 @@ struct Renderer {
     std::string operator()(const Text &n) { return n.value; }
 
     std::string operator()(const InlineCode &n) {
-        // TODO:
         return "<code>" + n.value + "</code>";
     }
 

@@ -3,7 +3,6 @@
 #include "parser.h"
 #include "types.h"
 #include <catch2/catch.hpp>
-#include <vector>
 
 using namespace std;
 
@@ -152,21 +151,6 @@ TEST_CASE("parse_ast works on simple inputs", "[parse_ast]") {
         Paragraph{vector<Node>{Text{"paragraph paragraph blah blah blah this "
                                     "should all be one single block"}}}}};
     REQUIRE(expected == parse_ast(document));
-
-    document = read_lines("./tests/hello_world.md");
-    expected = Root{vector<Node>{
-        Heading{1, vector<Node>{Text{"hello world!"}}},
-        Paragraph{vector<Node>{
-            Text{"this is a markdown file. it has some lines of text. hooray! "
-                 "this is one long paragraph split over multiples lines."}}},
-        Paragraph{vector<Node>{
-            Text{"this is a short line. with "},
-            Emphasis{vector<Node>{Text{"italics"}}},
-            Text{" and "},
-            Strong{vector<Node>{Text{"bold"}}},
-            Text{"."},
-        }}}};
-    REQUIRE(expected == parse_ast(document));
 }
 
 TEST_CASE("render_html renders text nodes", "[render_html]") {
@@ -201,4 +185,72 @@ TEST_CASE("render_html renders strong nodes", "[render_html]") {
     Strong strong = Strong{.children = vector<Node>{Text{"hello world"}}};
     std::string result = render_html(strong);
     REQUIRE(result == "<strong>hello world</strong>");
+}
+
+TEST_CASE("render_html renders paragraphs", "[render_html]") {
+    Paragraph p =
+        Paragraph{.children = vector<Node>{
+                      Text{"hello world "},
+                      Emphasis{.children = vector<Node>{Text{"emphasis"}}},
+                      Text{" some other text"}}};
+    std::string result = render_html(p);
+    REQUIRE(result == "<p>hello world <em>emphasis</em> some other text</p>");
+}
+
+TEST_CASE("render_html renders nested code blocks", "[render_html]") {
+    Paragraph p =
+        Paragraph{.children = vector<Node>{Emphasis{
+                      .children = vector<Node>{InlineCode{"code code code"}}}}};
+    std::string result = render_html(p);
+    REQUIRE(result == "<p><em><code>code code code</code></em></p>");
+}
+
+TEST_CASE("integration, hello_world.md") {
+
+    std::vector<std::string> document = read_lines("./tests/hello_world.md");
+
+    SECTION("read_lines") {
+        vector<string> expected = {
+            "# hello world!",
+            "",
+            ("this is a markdown file. it has some lines of text. hooray! this "
+             "is "
+             "one long"),
+            "paragraph split over multiples lines.",
+            "",
+            "this is a short line. with *italics* and **bold**.",
+        };
+        REQUIRE(document == expected);
+    };
+
+    Root ast = parse_ast(document);
+    SECTION("parse_ast") {
+        Root expected = Root{vector<Node>{
+            Heading{1, vector<Node>{Text{"hello world!"}}},
+            Paragraph{vector<Node>{Text{
+                "this is a markdown file. it has some lines of text. hooray! "
+                "this is one long paragraph split over multiples lines."}}},
+            Paragraph{vector<Node>{
+                Text{"this is a short line. with "},
+                Emphasis{vector<Node>{Text{"italics"}}},
+                Text{" and "},
+                Strong{vector<Node>{Text{"bold"}}},
+                Text{"."},
+            }}}};
+        REQUIRE(expected == ast);
+    }
+
+    string html = render_html(ast);
+    SECTION("render_html") {
+        string expected = R"(<!DOCTYPE html>
+<html>
+<head>
+<title>Page Title</title>
+</head>
+<body><h1>hello world!</h1><p>this is a markdown file. it has some lines of text. hooray! this is one long paragraph split over multiples lines.</p><p> this is a short line. with <em>italics</em> and <strong>bold</strong>.</p></
+body>
+</html>)";
+        REQUIRE(expected == html);
+    }
+
 }
